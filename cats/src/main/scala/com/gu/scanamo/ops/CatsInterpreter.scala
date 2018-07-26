@@ -81,6 +81,9 @@ object CatsInterpreter {
               a => F.delay(Right(a))
             )
           )
+
+      case LiftResponse(resp) =>
+        F.delay(resp)
     }
   }
 }

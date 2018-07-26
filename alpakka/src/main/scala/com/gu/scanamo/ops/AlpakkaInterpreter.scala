@@ -44,6 +44,8 @@ object AlpakkaInterpreter {
               .recover {
                 case e: ConditionalCheckFailedException => Either.left(e)
               }
+          case LiftResponse(resp) =>
+            Future.successful(resp)
         }
       }
     }

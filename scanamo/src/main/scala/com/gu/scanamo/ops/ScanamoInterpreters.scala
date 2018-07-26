@@ -57,6 +57,8 @@ object ScanamoInterpreters {
         Either.catchOnly[ConditionalCheckFailedException] {
           client.updateItem(JavaRequests.update(req))
         }
+      case LiftResponse(res) =>
+        res
     }
   }
 
@@ -117,6 +119,8 @@ object ScanamoInterpreters {
           .recover {
             case e: ConditionalCheckFailedException => Either.left(e)
           }
+      case LiftResponse(resp) =>
+        Future.successful(resp)
     }
   }
 }

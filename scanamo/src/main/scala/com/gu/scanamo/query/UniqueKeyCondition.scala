@@ -43,6 +43,10 @@ object UniqueKeyConditions {
         }
       }
     }
+
+  implicit def id= new UniqueKeyConditions[Set[Map[String, AttributeValue]]] {
+    override def asAVMap(t: Set[Map[String, AttributeValue]]): Set[Map[String, AttributeValue]] = t
+  }
 }
 
 case class UniqueKeys[T: UniqueKeyConditions](t: T) {
