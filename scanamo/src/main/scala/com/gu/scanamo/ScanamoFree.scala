@@ -81,6 +81,27 @@ object ScanamoFree {
       .map(_.flatMap(_.getResponses.get(tableName).asScala.toSet.map(read[T])).toSet)
   }
 
+  def getAllSafe[T: DynamoFormat](tableName: String)(keys: UniqueKeys[_]): ScanamoOps[Set[Either[DynamoReadError, T]]] = {
+
+    val resultFree: ScanamoOps[BatchGetItemResult] =
+      ScanamoOps.batchGet(
+        new BatchGetItemRequest().withRequestItems(
+          Map(tableName -> new KeysAndAttributes().withKeys(keys.asAVMap.map(_.asJava).asJavaCollection)).asJava
+        )
+      )
+
+    resultFree.flatMap { eachResult: BatchGetItemResult =>
+      lazy val responses: Set[Either[DynamoReadError, T]] =
+        eachResult.getResponses.get(tableName).asScala.toSet.map(read[T])
+
+        eachResult.getUnprocessedKeys.asScala.get(tableName).fold(ScanamoOps.lift(responses)){
+          keysAndAttris: KeysAndAttributes =>
+            getAllSafe[T](tableName)(UniqueKeys(keysAndAttris.getKeys.asScala.toSet[java.util.Map[String, AttributeValue]].map(_.asScala.toMap)))
+              .map(nextIterationResults => responses ++ nextIterationResults)
+        }
+    }
+  }
+
   def getAllWithConsistency[T: DynamoFormat](tableName: String)(
       keys: UniqueKeys[_]): ScanamoOps[Set[Either[DynamoReadError, T]]] = {
     keys.asAVMap

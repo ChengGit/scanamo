@@ -1,6 +1,7 @@
 package com.gu.scanamo.ops
 
 import com.amazonaws.services.dynamodbv2.model._
+import com.gu.scanamo.error.DynamoReadError
 import com.gu.scanamo.request._
 
 sealed trait ScanamoOpsA[A] extends Product with Serializable
@@ -18,6 +19,8 @@ final case class BatchGet(req: BatchGetItemRequest) extends ScanamoOpsA[BatchGet
 final case class Update(req: ScanamoUpdateRequest) extends ScanamoOpsA[UpdateItemResult]
 final case class ConditionalUpdate(req: ScanamoUpdateRequest)
     extends ScanamoOpsA[Either[ConditionalCheckFailedException, UpdateItemResult]]
+
+final case class LiftResponse[T](resp: Set[Either[DynamoReadError, T]]) extends ScanamoOpsA[Set[Either[DynamoReadError, T]]]
 
 object ScanamoOps {
 
@@ -43,4 +46,6 @@ object ScanamoOps {
   def conditionalUpdate(
       req: ScanamoUpdateRequest): ScanamoOps[Either[ConditionalCheckFailedException, UpdateItemResult]] =
     liftF[ScanamoOpsA, Either[ConditionalCheckFailedException, UpdateItemResult]](ConditionalUpdate(req))
+  def lift[T](resp: => Set[Either[DynamoReadError, T]]): ScanamoOps[Set[Either[DynamoReadError, T]]] =
+    liftF[ScanamoOpsA, Set[Either[DynamoReadError, T]]](LiftResponse(resp))
 }

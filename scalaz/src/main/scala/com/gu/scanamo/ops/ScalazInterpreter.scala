@@ -63,7 +63,10 @@ object ScalazInterpreter {
           eff(client.updateItemAsync, JavaRequests.update(req))
         case ConditionalUpdate(req) =>
           catchConditional(eff(client.updateItemAsync, JavaRequests.update(req)))
+        case LiftResponse(resp) =>
+          Task(resp)
       }
+
     }
   }
 }
